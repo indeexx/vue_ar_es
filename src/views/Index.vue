@@ -7,6 +7,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
 import INDEEX from "babylonjs";
+import 'babylonjs-loaders';
 
 @Component({})
 export default class Index extends Vue {
@@ -14,7 +15,7 @@ export default class Index extends Vue {
   private canvas!: any ;
   private engine!: INDEEX.Engine;
   private scene!: INDEEX.Scene;
-  private camera!: INDEEX.FreeCamera;
+  private camera!: any;
   private pointLight!: INDEEX.PointLight;
   private light!: INDEEX.HemisphericLight;
 
@@ -22,7 +23,7 @@ export default class Index extends Vue {
     this.init();
     window.addEventListener('resize', () => {
       this.engine.resize();
-    });
+    })
   }
   private init(): void {
     console.log("init...");
@@ -30,60 +31,73 @@ export default class Index extends Vue {
     this.canvas = document.getElementById('renderCanvas');
     this.engine = new INDEEX.Engine(this.canvas);
     this.scene = new INDEEX.Scene(this.engine);
-    this.scene.clearColor = new BABYLON.Color4(0, 0, 0.1, 0.1);
     this.engine.runRenderLoop(() => {
       that.scene.render();
     });
-    this.camera = new INDEEX.FreeCamera('freeCamera1', new INDEEX.Vector3(4, 4, -4), this.scene);
-    this.camera.setTarget(INDEEX.Vector3.Zero());
-    this.camera.attachControl(this.canvas, false);
-    this.camera.position.x = 3;
-    this.camera.position.y = 5;
-    this.camera.position.z = -3;
+    this.camera = new INDEEX.ArcRotateCamera("arcCam",INDEEX.Tools.ToRadians(86),INDEEX.Tools.ToRadians(52),55.0,INDEEX.Vector3.Zero(),this.scene);
+    this.camera.target = new INDEEX.Vector3(0, 0, 0);
+    this.camera.attachControl(this.canvas,true);
     this.pointLight = new INDEEX.PointLight('ponitLigth1', INDEEX.Vector3.Zero(), this.scene);
-    this.pointLight.position = new INDEEX.Vector3(10, 2, 6);
-    this.pointLight.diffuse = new INDEEX.Color3(1, 1, 1);//灯光固定颜色 绿色
-    this.pointLight.specular = new INDEEX.Color3(1, 1, 1);//漫反射 红色
+    this.pointLight.position = new INDEEX.Vector3(20, 20, 20);
+    this.pointLight.diffuse = new INDEEX.Color3(.1, .1, .1);//灯光固定颜色
+    this.pointLight.specular = new INDEEX.Color3(.1, .1, .1);//漫反射
     this.pointLight.intensity = 1.0;//光照强度 默认1.0
-    this.light = new INDEEX.HemisphericLight('light1', new INDEEX.Vector3(2,1,2), this.scene);
-    // let sphere = INDEEX.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, this.scene);
-    // sphere.position.y = 1;
-    var ground = INDEEX.MeshBuilder.CreateGround('ground1', {height:5, width:5, subdivisions: 1}, this.scene);
-    ground.position = new BABYLON.Vector3(0, -1, 0);
+    this.light = new INDEEX.HemisphericLight('light1', new INDEEX.Vector3(0,50,0), this.scene);
 
-    // INDEEX.SceneLoader.Load( 'assets/models/babylon/test/girl01/', 'girl01.babylon', this.engine, (scene: any) => {
-    //   //add orther scene
-    //   console.log('load success');
-    //   scene.executeWhenReady(function () {
-    //     scene.activeCamera.attachControl(that.canvas);
-    //     that.engine.runRenderLoop(function() {
-    //       scene.render();
-    //     });
-    //   });
-    // }, (progress: any) => {
-    //   //progress
-    //   console.log('progress');
-    // }, (error: any) => {
-    //   // error
-    //   console.log('error');
-    // });
-    let girl:any = INDEEX.SceneLoader.ImportMeshAsync('', 'assets/models/babylon/test/girl01/', 'girl01.babylon', this.scene, (progress: any) => {
-      let total: number = progress.total;
-      let loaded: number = progress.loaded;
-      if(total == loaded){
-        console.log('load sucess.')
-      }
+    let groundMaterial: INDEEX.StandardMaterial = new INDEEX.StandardMaterial("groundMaterial", this.scene);
+    let texture = new INDEEX.Texture("assets/models/cj/environment_Building_zhucheng_002_01.jpg", this.scene);
+    groundMaterial.diffuseTexture = texture;
+    let ground: any = INDEEX.MeshBuilder.CreateGround('ground1', {height:39, width:26, subdivisions: 10}, this.scene);
+    ground.material = groundMaterial;
+    ground.receiveShadows = true;
+    ground.position = new INDEEX.Vector3(-2, 24, -2);
+
+    let ground1: any = INDEEX.MeshBuilder.CreateGround('ground1', {height:36, width:86, subdivisions: 10}, this.scene);
+    ground1.material = groundMaterial;
+    ground1.receiveShadows = true;
+    ground1.position = new INDEEX.Vector3(-10, 19, 34);
+    
+
+    INDEEX.SceneLoader.ImportMesh('', 'assets/models/cj/', 'cj.babylon', this.scene, (newMeshes: any) => {
+        for(let i = 0; i< newMeshes.length; i++){
+          let mesh: any = newMeshes[i];
+          let obj: any = mesh.position;
+          let x: number = obj.x;
+          let y : number = obj.y;
+          let z : number = obj.z;
+          mesh.position = new INDEEX.Vector3(x + 58, y, z + 65);
+        }
     });
 
+    INDEEX.SceneLoader.ImportMesh('', 'assets/models/babylon/test/girl01/', 'girl01.babylon', this.scene, (newMeshes: any) => {
+        for(let i = 0; i< newMeshes.length; i++){
+          let mesh: any = newMeshes[i];
+          let obj: any = mesh.position;
+          let x: number = obj.x;
+          let y : number = obj.y;
+          let z : number = obj.z;
+          mesh.position = new INDEEX.Vector3(x , y + 20, z + 28);
+          mesh.rotation = new INDEEX.Vector3(INDEEX.Tools.ToRadians(-90), INDEEX.Tools.ToRadians(0), INDEEX.Tools.ToRadians(190));
+        }
+    });
+
+    // let loader: any = new INDEEX.AssetsManager(this.scene);
+		// let edificioB4: any = loader.addMeshTask("A2", "", "assets/models/cj/max/obj/", "cj.obj");
+		// INDEEX.OBJFileLoader.OPTIMIZE_WITH_UV = true;
+    // loader.load();
+    // loader.position = new INDEEX.Vector3(0, 0, 0);
+
+
     //skybox
-    // let skybox = INDEEX.MeshBuilder.CreateBox("skyBox", {size:1000.0}, this.scene);
-    // let skyboxMaterial = new INDEEX.StandardMaterial("skyBox", this.scene);
-    // skyboxMaterial.backFaceCulling = false;
-    // skyboxMaterial.reflectionTexture = new INDEEX.CubeTexture("assets/models/skybox/skybox/", this.scene);
-    // skyboxMaterial.reflectionTexture.coordinatesMode = INDEEX.Texture.SKYBOX_MODE;
-    // skyboxMaterial.diffuseColor = new INDEEX.Color3(0, 0, 0);
-    // skyboxMaterial.specularColor = new INDEEX.Color3(0, 0, 0);
-    // skybox.material = skyboxMaterial;
+    let skybox = INDEEX.MeshBuilder.CreateBox("skyBox", {size:10000.0}, this.scene);
+    let skyboxMaterial = new INDEEX.StandardMaterial("skyBox", this.scene);
+    skyboxMaterial.backFaceCulling = false;
+    skyboxMaterial.reflectionTexture = new INDEEX.CubeTexture("assets/models/skybox/skybox/", this.scene, ["skybox_px.jpg", "skybox_py.jpg", "skybox_pz.jpg", "skybox_nx.jpg", "skybox_ny.jpg", "skybox_nz.jpg"]);
+    skyboxMaterial.reflectionTexture.coordinatesMode = INDEEX.Texture.SKYBOX_MODE;
+    skyboxMaterial.diffuseColor = new INDEEX.Color3(0, 0, 0);
+    skyboxMaterial.specularColor = new INDEEX.Color3(0, 0, 0);
+    skybox.material = skyboxMaterial;
+
   }
 }
 </script>
@@ -96,7 +110,6 @@ export default class Index extends Vue {
   #renderCanvas {
     width: 100%;
     height: 100%;
-    // background-color: #f1f1f1;
   }
 }
 </style>
